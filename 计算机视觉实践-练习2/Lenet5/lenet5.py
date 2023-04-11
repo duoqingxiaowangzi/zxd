@@ -5,6 +5,9 @@ from torch.utils import data
 from torchvision import transforms
 from torch.autograd import Variable
 from tensorboardX import SummaryWriter
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 '''定义参数'''
 batch_size = 64
@@ -112,7 +115,32 @@ def do_test():
             # 累计预测正确个数
             correct += torch.sum(preds == labels)
 
+
+
     print('accuracy rate: ', correct/len(test_loader.dataset))
-do_train()
+# do_train()
 do_test()
+# 获取测试集的一个batch的数据和标签
+dataiter = iter(test_loader)
+images, labels = dataiter.next()
+
+images = images.cuda()
+labels = labels.cuda()
+model = torch.load('./model/lenet5.pth')
+# 正向推断
+output = model(images)
+# 取概率最高的分类作为分类结果
+_, preds = torch.max(output, dim=1)
+# 将数据从Torch张量转换为numpy的array
+images = images.cpu().numpy()
+# 可视化本batch中图片、预测种类、真实种类。
+fig = plt.figure(figsize=(5, 5))
+for idx in np.arange(15):
+    ax = fig.add_subplot(3, 5, idx + 1, xticks=[], yticks=[])
+    ax.imshow(np.squeeze(images[idx]), cmap='gray')
+    ax.set_title("{} ({})".format(str(preds[idx].item()), str(labels[idx].item())),
+                 color=("green" if preds[idx] == labels[idx] else "red"))
+plt.show()
+
+
 writer.close()
